@@ -160,8 +160,11 @@ comictypeset-ai/
 │   ├── requirements-train.txt
 │   ├── config.yaml
 │   ├── experiment_notes.md
+│   ├── data/
+│   │   └── .gitkeep
 │   ├── src/
 │   │   ├── __init__.py
+│   │   ├── download_dataset.py
 │   │   ├── synthetic_data_gen.py
 │   │   ├── dataset_loader.py
 │   │   └── model_unet.py

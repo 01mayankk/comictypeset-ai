@@ -5,7 +5,7 @@
 - [x] Milestone 2 — ML experiments and autonomous dataset download
 - [x] Milestone 3 — Backend and Docker
 - [x] Milestone 4 — Frontend
-- [ ] Milestone 5 — Root README and final audit
+- [x] Milestone 5 — Root README and final audit
 
 ---
 
@@ -101,3 +101,21 @@
   - Environment: Node.js v25.1.0 / npm 11.12.1 / Next.js 14.2.35
 - Known limitations:
   - Dynamic client-side re-rendering currently updates text overlays inside speech bubbles; advanced geometry repositioning is planned for future iterations.
+
+
+## 2026-11-23 20:04 — Milestone 5: Root README and final audit
+
+- [COMPLETED] Reviewed root `README.md`, `backend/README.md`, `frontend/README.md`, and `ml_experiments/README.md` for architectural, interface, and operational alignment.
+- [COMPLETED] Updated repository tree layout in root `README.md` to reflect `ml_experiments/data/.gitkeep` and `ml_experiments/src/download_dataset.py`.
+- [COMPLETED] Audited root `.gitignore`: confirmed comprehensive coverage of `.venv/`, `node_modules/`, `.next/`, `backend/models/*.keras`, `ml_experiments/data/*`, `.pytest_cache`, and environment files.
+- [COMPLETED] Verified no secrets, credentials, unverified large binary weights, or raw/unlicensed datasets are staged in Git.
+- [VERIFIED] All unit tests in backend re-verified with `pytest -q` (8/8 passing).
+- [VERIFIED] All frontend linting and production build re-verified (`npm run lint` and `npm run build` passing with 0 warnings/errors).
+- [VERIFIED] Dataset verification re-confirmed: 15 samples with {0, 255} binary masks and valid SHA256 manifest.
+- [NEXT TODO] Deploy backend Docker container to Hugging Face Docker Spaces and frontend to Vercel.
+- Verification evidence:
+  - Command: `pytest -q backend/tests/test_pipeline.py`, `npm run lint`, `npm run build`
+  - Result: All test suites and builds passed cleanly.
+  - Environment: Windows 11 / Node 25.1 / Python 3.10
+- Known limitations:
+  - Hugging Face Spaces free-tier container runs on CPU; OCR and cold start latency expected ~1-2s on first request.
