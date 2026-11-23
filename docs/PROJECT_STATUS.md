@@ -3,7 +3,7 @@
 ## Master Checklist
 - [x] Milestone 1 — Architecture docs and status ledger
 - [x] Milestone 2 — ML experiments and autonomous dataset download
-- [ ] Milestone 3 — Backend and Docker
+- [x] Milestone 3 — Backend and Docker
 - [ ] Milestone 4 — Frontend
 - [ ] Milestone 5 — Root README and final audit
 
@@ -57,3 +57,25 @@
 - Known limitations:
   - Hugging Face Hub unauthenticated download for gated comic datasets gracefully triggered synthetic generation fallback.
   - GPU-accelerated training environment is configured for WSL2 Ubuntu (`ml_experiments/setup_env.sh`), while current host execution shell is Windows PowerShell.
+
+
+## 2026-11-23 19:56 — Milestone 3: Backend and Docker
+
+- [COMPLETED] Created `backend/requirements.txt`, `backend/setup_env.ps1`, `backend/Dockerfile`, `backend/.dockerignore`, and `backend/models/.gitkeep`.
+- [COMPLETED] Built `backend/app/schemas.py` providing Pydantic models for `BoundingBox`, `BubbleItem`, `TranslationResponse`, and `HealthResponse`.
+- [COMPLETED] Built `backend/app/pipeline/segmenter.py` with dual-mode detection (MobileNetV2-UNet + OpenCV fallback) and reading order sorting (`ltr` and `rtl`).
+- [COMPLETED] Built `backend/app/pipeline/ocr_translator.py` with EasyOCR extraction, translation adapter interface, LRU memory caching, and mock injection.
+- [COMPLETED] Built `backend/app/pipeline/typesetter.py` with lettering inpainting via OpenCV Telea, dynamic font scaling, greedy word wrapping, and mask overlay rendering.
+- [COMPLETED] Built `backend/app/main.py` with FastAPI lifespan initialization, CORS middleware, decompression-bomb defense, image decoding, and endpoint orchestration.
+- [COMPLETED] Authored `backend/README.md` beginning with the required Hugging Face Space YAML frontmatter (`title`, `emoji`, `sdk: docker`, `app_port: 7860`).
+- [COMPLETED] Authored comprehensive test suite `backend/tests/test_pipeline.py`.
+- [VERIFIED] Created `backend/.venv`, installed dependencies, and executed `pytest -q backend/tests/test_pipeline.py`. All 8 tests passed (100% pass rate).
+- [VERIFIED] Fallback segmentation, reading order, OCR/translation error handling, inpainting, typesetting, image validation, and API responses verified.
+- [VERIFIED] Docker configuration verified against Hugging Face Spaces requirements (pinned `python:3.11-slim`, UID 1000, writable EasyOCR cache, port 7860).
+- [NEXT TODO] Milestone 4: Next.js Studio frontend (`frontend/`), TypeScript interfaces, Tailwind styling, `UploadZone`, `ComparisonViewer`, `BubbleEditor`, and `PipelineStatus` components.
+- Verification evidence:
+  - Command: `.\backend\.venv\Scripts\pytest.exe -q backend/tests/test_pipeline.py`
+  - Result: 8 passed in 0.90s
+  - Environment: Windows 11 / Python 3.10 / backend/.venv
+- Known limitations:
+  - Docker Desktop daemon is not currently active on host, so local image build was not executed; Dockerfile verified against HF Spaces standard specification.
