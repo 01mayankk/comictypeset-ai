@@ -1,0 +1,57 @@
+# Python virtual environments & bytecode
+.venv/
+*/.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/
+
+# Node & Frontend
+node_modules/
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+.npm/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+frontend/.env.local
+backend/.env
+
+# Machine Learning Data & Models
+# Allow keeping directory structure via .gitkeep
+ml_experiments/data/*
+!ml_experiments/data/.gitkeep
+backend/models/*.keras
+backend/models/*.h5
+backend/models/*.onnx
+!backend/models/.gitkeep
+
+# EasyOCR cache & weights
+.EasyOCR/
+*.pth
+
+# OS and IDE files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs and temporary files
+*.log
+tmp/
+scratch/
