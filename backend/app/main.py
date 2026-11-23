@@ -52,10 +52,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Initializes models and pipeline stages once on worker startup."""
     logger.info("Initializing ComicTypeset AI pipeline services...")
 
+    app.state.ocr_translator = OCRTranslator(languages=["en"])
     configured_model_path = Path(os.getenv("MODEL_PATH", "models/bubble_unet.keras")).expanduser()
     model_path = configured_model_path if configured_model_path.is_absolute() else BACKEND_DIR / configured_model_path
     app.state.segmenter = SpeechBubbleSegmenter(model_path=str(model_path.resolve()))
-    app.state.ocr_translator = OCRTranslator(languages=["en"])
     app.state.typesetter = ComicTypesetter()
 
     logger.info(f"Pipeline ready. Active bubble detector mode: {app.state.segmenter.active_mode}")

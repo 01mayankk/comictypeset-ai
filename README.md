@@ -116,7 +116,7 @@ correction or a more advanced layout-analysis stage.
 ``` mermaid
 flowchart LR
     U[User] --> FE[Next.js studio<br/>Vercel]
-    FE -->|HTTP upload and options| API[FastAPI service<br/>Hugging Face Docker Space]
+    FE -->|HTTP upload and options| API[FastAPI service<br/>Hugging Face Gradio ZeroGPU Space]
     API --> SEG[Segmentation model]
     SEG --> OCR[OCR adapter]
     OCR --> TR[Translation adapter]
@@ -137,7 +137,7 @@ flowchart LR
 -   **Backend:** FastAPI and Uvicorn.
 -   **Frontend:** Next.js App Router, TypeScript, and Tailwind CSS.
 -   **Experiments:** JupyterLab notebooks with reusable Python modules.
--   **Deployment targets:** Hugging Face Docker Spaces for the API and
+-   **Deployment targets:** Hugging Face Gradio ZeroGPU Space for the API and
     Vercel for the frontend.
 
 ## Repository layout
@@ -556,11 +556,11 @@ or deployment target was not actually tested.
 
 ## Deployment
 
-### Backend: Hugging Face Docker Space
+### Backend: Hugging Face Gradio ZeroGPU Space
 
-The backend is intended to run as a Docker Space on port `7860`. The
-`backend/README.md` should begin with the required Hugging Face YAML
-metadata:
+The existing backend Space uses Gradio SDK on port `7860` and mounts the
+FastAPI service alongside a small Gradio landing page. Its `README.md`
+metadata identifies the entrypoint and supported runtime:
 
 ``` yaml
 ---
@@ -568,30 +568,18 @@ title: ComicTypeset AI
 emoji: 💬
 colorFrom: indigo
 colorTo: purple
-sdk: docker
-app_port: 7860
+sdk: gradio
+sdk_version: 6.32.0
+python_version: 3.12.12
+app_file: gradio_app.py
 ---
 ```
 
-The Docker image should:
-
--   Use a pinned Python 3.11 base image (prefer a specific patch tag or
-    digest for reproducibility).
--   Install the system libraries required by OpenCV.
--   Run as a non-root user.
--   Store EasyOCR model/cache files in a writable user directory.
--   Expose port `7860`.
--   Start Uvicorn with `app.main:app`.
-
-Example runtime command:
-
-``` bash
-uvicorn app.main:app --host 0.0.0.0 --port 7860
-```
-
-Plan for cold starts, limited CPU/RAM, model download time, and
-temporary storage constraints on the selected Space hardware. Do not
-assume the deployment has a GPU.
+The Gradio entrypoint is `backend/gradio_app.py`; it mounts the existing
+FastAPI endpoints without removing them. The current TensorFlow model
+inference runs on CPU; ZeroGPU acceleration is not configured for this
+model. Plan for cold starts, model initialization time, and storage
+constraints. Verify `/health` before sending frontend traffic.
 
 ### Frontend: Vercel
 

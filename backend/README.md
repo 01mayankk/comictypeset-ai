@@ -3,15 +3,17 @@ title: ComicTypeset AI
 emoji: 💬
 colorFrom: indigo
 colorTo: purple
-sdk: docker
-app_port: 7860
+sdk: gradio
+sdk_version: 6.32.0
+python_version: 3.12.12
+app_file: gradio_app.py
 ---
 
-# ComicTypeset AI — Backend API & Docker Service
+# ComicTypeset AI — Backend API & Gradio Space
 
 The ComicTypeset AI backend is a production-ready FastAPI service orchestrating speech bubble segmentation, text extraction (OCR), neural machine translation, lettering inpainting, and typography re-lettering.
 
-Designed for deployment on **Hugging Face Docker Spaces** and local development environments.
+The Hugging Face entrypoint mounts a small Gradio landing page while preserving the FastAPI endpoints used by the Vercel frontend. A button can request a brief ZeroGPU diagnostic allocation; the TensorFlow model and EasyOCR pipeline currently run on CPU.
 
 ---
 
@@ -138,17 +140,8 @@ pytest -q
 
 ---
 
-## 4. Docker Deployment (Hugging Face Spaces)
+## 4. Hugging Face ZeroGPU Space
 
-The backend includes a production-grade `Dockerfile` optimized for Hugging Face Docker Spaces:
-- Pinned `python:3.11-slim` base image.
-- Runs as non-root user `user` (UID 1000).
-- Pre-configures writable `/home/user/.EasyOCR` directory.
-- Exposes port `7860`.
+The Space uses the Gradio SDK because Hugging Face ZeroGPU does not support Docker SDK Spaces. `gradio_app.py` mounts the API and exposes the Gradio landing page at `/gradio/`; the REST API remains available at `/api/v1/translate-page`, `/health`, and `/docs`. Its ZeroGPU diagnostic is on demand and does not accelerate the TensorFlow API pipeline.
 
-### Build & Run Container Locally
-```bash
-cd backend
-docker build -t comictypeset-api .
-docker run -p 7860:7860 comictypeset-api
-```
+For a Vercel deployment, set `NEXT_PUBLIC_API_URL=https://01mayankk-comic.hf.space` and set `ALLOWED_ORIGINS` in the Space variables to the exact Vercel origin. Current inference is CPU-based; ZeroGPU acceleration is not wired for the TensorFlow checkpoint.

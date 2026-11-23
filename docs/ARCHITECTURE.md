@@ -15,7 +15,7 @@ flowchart TB
         Edge["Vercel Edge Network / SSR"]
     end
 
-    subgraph BackendHost["Backend Host (Hugging Face Docker Space / Cloud)"]
+    subgraph BackendHost["Backend Host (Hugging Face Gradio ZeroGPU Space / Cloud)"]
         API["FastAPI REST Application<br/>(Uvicorn on Port 7860)"]
         
         subgraph Pipeline["4-Stage Core Pipeline"]
@@ -73,13 +73,12 @@ To prevent dependency conflicts and maintain reproducibility across diverse oper
   - Headroom for system OS and display buffers: ~3.0 GB.
 - **Rule:** If batch size 8 exceeds available VRAM on complex augmentations, reduce batch size to 4 or input spatial dimension to $384 \times 384$.
 
-### 3.2 Hugging Face Docker Space Runtime Budget (Free Tier)
-- **CPU Architecture:** 2 vCPU Intel/AMD x86_64 (CPU inference mode).
-- **System Memory (RAM):** 16 GB maximum.
-- **Disk Space:** 50 GB container disk layer.
+### 3.2 Hugging Face ZeroGPU Space Runtime
+- The Space runs with the Gradio SDK and ZeroGPU hardware.
+- The current TensorFlow U-Net and EasyOCR inference path runs on CPU; ZeroGPU GPU acceleration is not wired into this TensorFlow path.
 - **Cold-Start Allocation Plan:**
   - EasyOCR Model Weights (CRAFT detector + Latin/Japanese recognition models): ~120 MB loaded into `/home/user/.EasyOCR`.
-  - MobileNetV2-UNet (or OpenCV Fallback): ~45 MB loaded into system RAM.
+  - MobileNetV2-UNet (or OpenCV Fallback): ~97 MB loaded into system RAM.
   - Peak per-request processing footprint: < 1.2 GB per $2048 \times 2048$ image.
   - Concurrency: Bounded by semaphore to 2 concurrent image pipelines to guarantee stability within 16 GB RAM.
 

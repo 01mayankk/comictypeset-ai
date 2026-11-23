@@ -132,3 +132,19 @@
 - Verification evidence:
   - Environment: Windows / Python 3.10 / `backend/.venv`, TensorFlow 2.21.0, EasyOCR 1.7.2.
   - Note: `backend/models/bubble_unet.keras` is intentionally excluded by `.gitignore`; supply the 97 MB checkpoint separately in a clean deployment build context.
+
+## 2026-11-24 — Free Hugging Face ZeroGPU compatibility
+
+- [COMPLETED] Added a Gradio SDK entrypoint that mounts the existing FastAPI application and preserves its frontend API routes.
+- [COMPLETED] Updated Space metadata for Gradio 6.32.0 and Python 3.12.12; retained the existing U-Net checkpoint and API.
+- [COMPLETED] Added the required on-demand `@spaces.GPU` diagnostic and documented that the TensorFlow and EasyOCR pipeline still runs on CPU.
+- [VERIFIED] Imported the mounted Gradio/FastAPI application successfully and `pip check` reported no broken requirements.
+- [VERIFIED] Ran `.\backend\.venv\Scripts\pytest.exe -q backend/tests/test_pipeline.py`; all 11 tests passed.
+- [BLOCKED] The first Gradio deployment exposed a ZeroGPU startup requirement: at least one `@spaces.GPU` function must be present. Added a brief diagnostic function; re-deploy and verify hosted health before considering this milestone complete.
+
+## 2026-11-24 — ZeroGPU runtime validation
+
+- [VERIFIED] Hugging Face accepted the Gradio/ZeroGPU metadata and built the Space; the `@spaces.GPU` startup check is present.
+- [BLOCKED] The latest Space revision (`87c9a2a`) exits with code 3 during startup while EasyOCR model download is logged. `/health` returns Gradio HTML rather than the FastAPI JSON response, so the hosted API is not operational.
+- [VERIFIED] The FastAPI pipeline tests pass locally (11/11) after initializing EasyOCR before TensorFlow.
+- [NEXT TODO] Resolve the EasyOCR/ZeroGPU startup failure before claiming the backend is deployed. The current model and OCR pipeline have not been verified on the hosted Space.

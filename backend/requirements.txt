@@ -12,3 +12,5 @@ httpx>=0.26.0
 pytest>=7.4.0
 pytest-asyncio>=0.23.0
 tensorflow==2.21.0
+gradio==6.32.0
+spaces>=0.52.1,<0.54
