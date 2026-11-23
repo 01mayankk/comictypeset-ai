@@ -6,9 +6,6 @@ __pycache__/
 .coverage
 htmlcov/
 tests/
-models/*.keras
-models/*.h5
-!models/.gitkeep
 *.log
 .DS_Store
 Thumbs.db

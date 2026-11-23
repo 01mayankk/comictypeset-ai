@@ -73,4 +73,6 @@ npm run build
 - **Root Directory:** `frontend`
 - **Build Command:** `npm run build`
 - **Output Directory:** `.next`
-- **Environment Variable:** `NEXT_PUBLIC_API_URL` set to your live Hugging Face Docker Space or cloud API URL.
+- **Environment Variable:** `NEXT_PUBLIC_API_URL=https://01mayankk-comic.hf.space`
+
+Set `ALLOWED_ORIGINS` in the Hugging Face Space variables to the exact Vercel production URL (for example, `https://your-project.vercel.app`). Add any other Vercel domains as comma-separated origins. The frontend defaults to the Hugging Face Space URL when `NEXT_PUBLIC_API_URL` is unset; `.env.local` can continue overriding it for local development.

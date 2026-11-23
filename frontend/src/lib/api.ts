@@ -41,7 +41,9 @@ export interface HealthResponse {
   model_loaded: boolean;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:7860";
+const API_BASE_URL = (
+  process.env.NEXT_PUBLIC_API_URL || "https://01mayankk-comic.hf.space"
+).replace(/\/+$/, "");
 
 /**
  * Checks backend API health.
