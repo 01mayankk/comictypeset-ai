@@ -13,6 +13,7 @@ import logging
 import os
 import time
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import AsyncGenerator
 
 import numpy as np
@@ -34,6 +35,7 @@ logger = logging.getLogger("comictypeset-api")
 
 MAX_FILE_SIZE_BYTES = 15 * 1024 * 1024  # 15 MB
 MAX_IMAGE_DIMENSION = 4096
+BACKEND_DIR = Path(__file__).resolve().parent.parent
 
 
 def encode_image_base64_png(image_rgb: np.ndarray) -> str:
@@ -50,8 +52,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Initializes models and pipeline stages once on worker startup."""
     logger.info("Initializing ComicTypeset AI pipeline services...")
 
-    model_path = os.getenv("MODEL_PATH", "models/bubble_unet.keras")
-    app.state.segmenter = SpeechBubbleSegmenter(model_path=model_path)
+    configured_model_path = Path(os.getenv("MODEL_PATH", "models/bubble_unet.keras")).expanduser()
+    model_path = configured_model_path if configured_model_path.is_absolute() else BACKEND_DIR / configured_model_path
+    app.state.segmenter = SpeechBubbleSegmenter(model_path=str(model_path.resolve()))
     app.state.ocr_translator = OCRTranslator(languages=["en"])
     app.state.typesetter = ComicTypesetter()
 
@@ -78,6 +81,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.get("/")
+async def root() -> dict[str, str]:
+    """Returns a basic service status for the API root."""
+    return {"status": "ok", "service": "ComicTypeset AI", "docs": "/docs"}
 
 
 @app.get("/health", response_model=HealthResponse)
@@ -162,14 +171,14 @@ async def translate_page(
 
     # Stage 3: Translation
     t_trans_start = time.perf_counter()
-    for b in raw_bubbles:
-        translated, warn = ocr_translator.translate(
-            b["raw_text"],
-            source_lang=source_lang,
-            target_lang=target_lang
-        )
+    translations, translation_warnings = ocr_translator.translate_batch(
+        [b["raw_text"] for b in raw_bubbles],
+        source_lang=source_lang,
+        target_lang=target_lang
+    )
+    for b, translated, warn in zip(raw_bubbles, translations, translation_warnings):
         b["translated_text"] = translated
-        if warn:
+        if warn and warn not in warnings:
             warnings.append(warn)
     t_trans = (time.perf_counter() - t_trans_start) * 1000
 

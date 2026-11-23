@@ -119,3 +119,16 @@
   - Environment: Windows 11 / Node 25.1 / Python 3.10
 - Known limitations:
   - Hugging Face Spaces free-tier container runs on CPU; OCR and cold start latency expected ~1-2s on first request.
+
+
+## 2026-11-24 — Backend and U-Net validation
+
+- [COMPLETED] Resolved the U-Net model path relative to the backend, load the checkpoint with `compile=False`, added the root status route, and combined bubble text into one translation-provider request.
+- [COMPLETED] Pinned Hugging Face backend dependencies to TensorFlow 2.21.0 and EasyOCR 1.7.2.
+- [VERIFIED] Ran `.\backend\.venv\Scripts\pytest.exe -q backend/tests/test_pipeline.py`; all 11 tests passed.
+- [VERIFIED] `GET /health` reports `model_loaded: true` and `detector_mode: unet`.
+- [VERIFIED] Submitted `ml_experiments/data/processed/real/images/synth_0003.png` through Swagger. The API returned HTTP 200, detected 3 bubbles with U-Net, extracted OCR text, and returned final-image and mask-overlay PNGs.
+- [BLOCKED] The supplied `synth_0003.png` is a generated sample, not a real comic/manga scan. Google Translate returned HTTP 429 during the live request even though the adapter sends all bubble texts in one request; translation fell back to the original OCR text and emitted provider warnings. Re-test translation with an authorized real page after the provider limit clears.
+- Verification evidence:
+  - Environment: Windows / Python 3.10 / `backend/.venv`, TensorFlow 2.21.0, EasyOCR 1.7.2.
+  - Note: `backend/models/bubble_unet.keras` is intentionally excluded by `.gitignore`; supply the 97 MB checkpoint separately in a clean deployment build context.

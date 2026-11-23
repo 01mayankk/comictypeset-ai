@@ -37,12 +37,16 @@ class OCRTranslator:
     def __init__(
         self,
         languages: list[str] | None = None,
-        translation_provider: Optional[Callable[[str, str, str], str]] = None
+        translation_provider: Optional[Callable[[str, str, str], str]] = None,
+        translation_batch_provider: Optional[Callable[[list[str], str, str], list[str]]] = None
     ) -> None:
         self.languages = languages or ["en"]
         self.reader = None
         self.cache = TranslationCache()
         self._translation_provider = translation_provider or self._default_deep_translator
+        self._translation_batch_provider = translation_batch_provider
+        if translation_provider is None and translation_batch_provider is None:
+            self._translation_batch_provider = self._default_deep_translator_batch
         self._init_reader()
 
     def _init_reader(self) -> None:
@@ -58,6 +62,68 @@ class OCRTranslator:
     def set_translation_provider(self, provider: Callable[[str, str, str], str]) -> None:
         """Injects a custom translation provider (useful for unit tests and local LLM backends)."""
         self._translation_provider = provider
+        self._translation_batch_provider = None
+
+    def translate_batch(
+        self,
+        texts: list[str],
+        source_lang: str = "auto",
+        target_lang: str = "en"
+    ) -> tuple[list[str], list[Optional[str]]]:
+        """Translates multiple strings with a single provider request when available."""
+        clean_texts = [text.strip() for text in texts]
+        translations = [""] * len(clean_texts)
+        warnings: list[Optional[str]] = [None] * len(clean_texts)
+
+        if self._translation_batch_provider is None:
+            for index, text in enumerate(clean_texts):
+                translations[index], warnings[index] = self.translate(text, source_lang, target_lang)
+            return translations, warnings
+
+        missing: dict[str, list[int]] = {}
+        for index, text in enumerate(clean_texts):
+            if not text:
+                continue
+            if source_lang.lower() == target_lang.lower():
+                translations[index] = text
+                continue
+            cached = self.cache.get(source_lang, target_lang, text)
+            if cached is not None:
+                translations[index] = cached
+                continue
+            missing.setdefault(text, []).append(index)
+
+        if not missing:
+            return translations, warnings
+
+        texts_to_translate = list(missing)
+        try:
+            translated_texts = self._translation_batch_provider(
+                texts_to_translate,
+                source_lang,
+                target_lang
+            )
+            if len(translated_texts) != len(texts_to_translate):
+                raise ValueError(
+                    f"Batch translation returned {len(translated_texts)} results "
+                    f"for {len(texts_to_translate)} input texts."
+                )
+
+            for text, translated in zip(texts_to_translate, translated_texts):
+                result = translated or text
+                self.cache.set(source_lang, target_lang, text, result)
+                for index in missing[text]:
+                    translations[index] = result
+        except Exception as exc:
+            logger.warning("Batch translation failed for %d texts: %s", len(texts_to_translate), exc)
+            warning = f"Translation provider warning: {str(exc)}"
+            for text, indexes in missing.items():
+                for index in indexes:
+                    translations[index] = text
+                    warnings[index] = warning
+
+        return translations, warnings
+
 
     def _default_deep_translator(self, text: str, source_lang: str, target_lang: str) -> str:
         """Default translation provider using deep-translator."""
@@ -65,6 +131,33 @@ class OCRTranslator:
         src = "auto" if source_lang in ["auto", "", None] else source_lang
         translated = GoogleTranslator(source=src, target=target_lang).translate(text)
         return translated or text
+
+    def _default_deep_translator_batch(
+        self,
+        texts: list[str],
+        source_lang: str,
+        target_lang: str
+    ) -> list[str]:
+        """Translates a group of strings in one provider request."""
+        if not texts:
+            return []
+
+        from deep_translator import GoogleTranslator
+        src = "auto" if source_lang in ["auto", "", None] else source_lang
+        separator = "XQZBUBBLESEP7F3A1D9B6C2E8XQZ"
+        while any(separator in text for text in texts):
+            separator += "X"
+
+        translated = GoogleTranslator(source=src, target=target_lang).translate(
+            separator.join(texts)
+        )
+        results = [text.strip() for text in translated.split(separator)]
+        if len(results) != len(texts):
+            raise ValueError(
+                f"Batch translation returned {len(results)} segments "
+                f"for {len(texts)} input texts."
+            )
+        return results
 
     def extract_text(
         self,

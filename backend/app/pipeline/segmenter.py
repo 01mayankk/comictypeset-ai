@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import logging
 import os
+from pathlib import Path
 from typing import Any, Tuple
 
 import cv2
@@ -54,8 +55,10 @@ def sort_bubbles_reading_order(
 class SpeechBubbleSegmenter:
     """Orchestrates speech bubble segmentation with graceful classical fallback."""
 
-    def __init__(self, model_path: str = "models/bubble_unet.keras") -> None:
-        self.model_path = model_path
+    def __init__(self, model_path: str | os.PathLike[str] | None = None) -> None:
+        if model_path is None:
+            model_path = Path(__file__).resolve().parents[2] / "models" / "bubble_unet.keras"
+        self.model_path = os.fspath(model_path)
         self.model = None
         self.active_mode = "opencv_fallback"
         self._init_detector()
@@ -65,33 +68,20 @@ class SpeechBubbleSegmenter:
         if os.path.exists(self.model_path):
             try:
                 import tensorflow as tf
-                # Custom metric definitions for loading Keras checkpoint
-                def dice_coef(y_true, y_pred, smooth=1e-6):
-                    y_true_f = tf.cast(tf.reshape(y_true, [-1]), tf.float32)
-                    y_pred_f = tf.cast(tf.reshape(y_pred, [-1]), tf.float32)
-                    intersection = tf.reduce_sum(y_true_f * y_pred_f)
-                    return (2.0 * intersection + smooth) / (tf.reduce_sum(y_true_f) + tf.reduce_sum(y_pred_f) + smooth)
-
-                def iou_metric(y_true, y_pred, smooth=1e-6):
-                    y_true_f = tf.cast(tf.reshape(y_true, [-1]), tf.float32)
-                    y_pred_f = tf.cast(tf.reshape(y_pred, [-1]) > 0.5, tf.float32)
-                    intersection = tf.reduce_sum(y_true_f * y_pred_f)
-                    total = tf.reduce_sum(y_true_f) + tf.reduce_sum(y_pred_f)
-                    union = total - intersection
-                    return (intersection + smooth) / (union + smooth)
-
-                self.model = tf.keras.models.load_model(
-                    self.model_path,
-                    custom_objects={"dice_coef": dice_coef, "iou_metric": iou_metric},
-                    compile=False
-                )
+                self.model = tf.keras.models.load_model(self.model_path, compile=False)
                 self.active_mode = "unet"
                 logger.info(f"Loaded trained MobileNetV2-UNet checkpoint from '{self.model_path}'.")
                 return
             except Exception as exc:
-                logger.warning(f"Failed to load UNet weights at '{self.model_path}': {exc}. Using fallback.")
+                logger.exception(
+                    "Failed to load UNet weights at '%s': %s. Using fallback.",
+                    self.model_path,
+                    exc
+                )
+                self.active_mode = "opencv_fallback"
+                return
 
-        logger.info(f"No checkpoint at '{self.model_path}'. Active mode: opencv_fallback.")
+        logger.info("No checkpoint at '%s'. Active mode: opencv_fallback.", self.model_path)
         self.active_mode = "opencv_fallback"
 
     def _segment_opencv_fallback(self, image_rgb: np.ndarray) -> np.ndarray:

@@ -56,6 +56,16 @@ def test_health_endpoint(mock_client: TestClient):
     assert data["status"] == "ok"
     assert "detector_mode" in data
     assert isinstance(data["model_loaded"], bool)
+    if os.path.isfile(os.path.join(BACKEND_DIR, "models", "bubble_unet.keras")):
+        assert data["detector_mode"] == "unet"
+        assert data["model_loaded"] is True
+
+
+def test_root_endpoint(mock_client: TestClient):
+    """Verifies that opening the API root returns service status."""
+    resp = mock_client.get("/")
+    assert resp.status_code == 200
+    assert resp.json() == {"status": "ok", "service": "ComicTypeset AI", "docs": "/docs"}
 
 
 def test_opencv_fallback_segmentation(test_image_rgb: np.ndarray):
@@ -120,6 +130,52 @@ def test_translation_caching_and_mock():
     t2, _ = translator.translate("Test Sentence", "en", "fr")
     assert t2 == "Translated_Test Sentence"
     assert call_count[0] == 1
+
+
+def test_translation_batch_provider_and_cache():
+    """Verifies a single batch call handles unique texts and populates the cache."""
+    calls = []
+
+    def batch_provider(texts, src, tgt):
+        calls.append((texts, src, tgt))
+        return [f"{tgt}:{text}" for text in texts]
+
+    translator = OCRTranslator(translation_batch_provider=batch_provider)
+    translated, warnings = translator.translate_batch(
+        ["Hello", "World", "Hello", ""],
+        source_lang="en",
+        target_lang="es"
+    )
+
+    assert calls == [(["Hello", "World"], "en", "es")]
+    assert translated == ["es:Hello", "es:World", "es:Hello", ""]
+    assert warnings == [None, None, None, None]
+    assert translator.translate("Hello", "en", "es") == ("es:Hello", None)
+
+
+def test_default_translation_batch_uses_one_provider_request(monkeypatch):
+    """Verifies the deep-translator adapter joins text into one provider request."""
+    provider_calls = []
+
+    class MockGoogleTranslator:
+        def __init__(self, source, target):
+            self.source = source
+            self.target = target
+
+        def translate(self, text):
+            provider_calls.append(text)
+            return text.replace("Hello", "Hola").replace("World", "Mundo")
+
+    monkeypatch.setattr("deep_translator.GoogleTranslator", MockGoogleTranslator)
+    monkeypatch.setattr(OCRTranslator, "_init_reader", lambda self: None)
+    translator = OCRTranslator()
+
+    translated = translator._default_deep_translator_batch(["Hello", "World"], "en", "es")
+
+    assert translated == ["Hola", "Mundo"]
+    assert len(provider_calls) == 1
+    assert "Hello" in provider_calls[0]
+    assert "World" in provider_calls[0]
 
 
 def test_inpainting_and_typesetting(test_image_rgb: np.ndarray):

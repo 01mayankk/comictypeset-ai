@@ -45,7 +45,10 @@ flowchart TD
 
 ## 2. API Contract
 
-### 2.1 `GET /health`
+### 2.1 `GET /`
+Returns a basic service status and the documentation path.
+
+### 2.2 `GET /health`
 Returns service availability, version, and the active segmentation detector mode.
 
 **Response:**
@@ -60,7 +63,7 @@ Returns service availability, version, and the active segmentation detector mode
 
 ---
 
-### 2.2 `POST /api/v1/translate-page`
+### 2.3 `POST /api/v1/translate-page`
 Processes a comic or manga page scan and returns the translated page, mask overlay, and extracted text.
 
 **Multipart Form Parameters:**
