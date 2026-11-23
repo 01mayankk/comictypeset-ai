@@ -4,7 +4,7 @@
 - [x] Milestone 1 — Architecture docs and status ledger
 - [x] Milestone 2 — ML experiments and autonomous dataset download
 - [x] Milestone 3 — Backend and Docker
-- [ ] Milestone 4 — Frontend
+- [x] Milestone 4 — Frontend
 - [ ] Milestone 5 — Root README and final audit
 
 ---
@@ -79,3 +79,25 @@
   - Environment: Windows 11 / Python 3.10 / backend/.venv
 - Known limitations:
   - Docker Desktop daemon is not currently active on host, so local image build was not executed; Dockerfile verified against HF Spaces standard specification.
+
+
+## 2026-11-23 20:02 — Milestone 4: Frontend
+
+- [COMPLETED] Created Next.js 14 App Router project with TypeScript and Tailwind CSS in `frontend/`.
+- [COMPLETED] Built `src/lib/api.ts` defining types synchronized with `backend/app/schemas.py`, API fetch methods, and client-side HTML5 canvas synthetic comic page generator.
+- [COMPLETED] Built `src/components/UploadZone.tsx` featuring drag-and-drop file upload, file validation, synthetic sample comic generator button, language dropdowns, and reading order selectors (`ltr` / `rtl`).
+- [COMPLETED] Built `src/components/PipelineStatus.tsx` featuring real-time stage progress, timing latency breakdown, active detector mode badge (`Trained U-Net` vs `OpenCV Fallback`), and non-fatal warning badges.
+- [COMPLETED] Built `src/components/ComparisonViewer.tsx` supporting split side-by-side view, final typeset view, red bubble mask overlay, and high-res typeset PNG download.
+- [COMPLETED] Built `src/components/BubbleEditor.tsx` supporting interactive OCR text review, editable translated text fields, and client-side re-rendering.
+- [COMPLETED] Built `src/app/page.tsx` and `src/app/layout.tsx` unifying the studio dashboard with health check status and memory-safe temporary object URL disposal (`URL.revokeObjectURL`).
+- [COMPLETED] Authored `frontend/README.md` with state flow Mermaid diagram and Vercel deployment instructions.
+- [VERIFIED] Executed `npm install` (resolved in 55s).
+- [VERIFIED] Executed `npm run lint` with 0 warnings and 0 errors.
+- [VERIFIED] Executed `npm run build`: successfully generated optimized production bundle (`/` route 8.29 kB, first load JS 95.6 kB).
+- [NEXT TODO] Milestone 5: Global repository audit, root README verification, and final synchronization.
+- Verification evidence:
+  - Command: `cd frontend; npm run lint; npm run build`
+  - Result: Production build succeeded, 0 lint errors, 4/4 static pages generated.
+  - Environment: Node.js v25.1.0 / npm 11.12.1 / Next.js 14.2.35
+- Known limitations:
+  - Dynamic client-side re-rendering currently updates text overlays inside speech bubbles; advanced geometry repositioning is planned for future iterations.
