@@ -61,6 +61,17 @@ def test_health_endpoint(mock_client: TestClient):
         assert data["model_loaded"] is True
 
 
+def test_lightweight_space_mode_skips_ml_models(monkeypatch):
+    """Verifies the free Space can start without TensorFlow or EasyOCR."""
+    monkeypatch.setenv("COMICTYPESET_LIGHTWEIGHT", "1")
+
+    with TestClient(app) as client:
+        health = client.get("/health").json()
+        assert health["detector_mode"] == "opencv_fallback"
+        assert health["model_loaded"] is False
+        assert app.state.ocr_translator.reader is None
+
+
 def test_root_endpoint(mock_client: TestClient):
     """Verifies that opening the API root returns service status."""
     resp = mock_client.get("/")

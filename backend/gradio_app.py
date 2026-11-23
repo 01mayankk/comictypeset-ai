@@ -8,6 +8,8 @@ import gradio as gr
 import spaces
 import uvicorn
 
+os.environ.setdefault("COMICTYPESET_LIGHTWEIGHT", "1")
+
 from app.main import app as api_app
 
 
@@ -23,19 +25,19 @@ def check_zero_gpu() -> str:
 with gr.Blocks(title="ComicTypeset AI") as demo:
     gr.Markdown("# ComicTypeset AI")
     gr.Markdown(
-        "Speech bubble segmentation, OCR, translation, and typesetting are exposed "
-        "through the FastAPI service."
+        "The free Space uses OpenCV segmentation and placeholder OCR. The full "
+        "U-Net and EasyOCR pipeline remains available in the local backend."
     )
     gr.Markdown("[Open API documentation](/docs) | [Health status](/health)")
     gr.Markdown(
-        "Inference currently runs on CPU; ZeroGPU acceleration is not configured "
-        "for this TensorFlow model."
+        "Use the API documentation to submit a page. Translation and typesetting "
+        "remain enabled."
     )
     gpu_status = gr.Textbox(label="ZeroGPU diagnostic", interactive=False)
     gr.Button("Check ZeroGPU allocation").click(check_zero_gpu, outputs=gpu_status)
 
-
-app = gr.mount_gradio_app(api_app, demo, path="/gradio")
+demo.queue()
+app = gr.mount_gradio_app(api_app, demo, path="/gradio", ssr_mode=False)
 
 
 if __name__ == "__main__":

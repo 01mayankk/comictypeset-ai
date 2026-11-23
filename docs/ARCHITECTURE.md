@@ -75,10 +75,10 @@ To prevent dependency conflicts and maintain reproducibility across diverse oper
 
 ### 3.2 Hugging Face ZeroGPU Space Runtime
 - The Space runs with the Gradio SDK and ZeroGPU hardware.
-- The current TensorFlow U-Net and EasyOCR inference path runs on CPU; ZeroGPU GPU acceleration is not wired into this TensorFlow path.
-- **Cold-Start Allocation Plan:**
-  - EasyOCR Model Weights (CRAFT detector + Latin/Japanese recognition models): ~120 MB loaded into `/home/user/.EasyOCR`.
-  - MobileNetV2-UNet (or OpenCV Fallback): ~97 MB loaded into system RAM.
+- Free Space mode skips TensorFlow and EasyOCR initialization to avoid ZeroGPU startup failures.
+- Bubble detection uses OpenCV; OCR returns placeholder text and the API response includes a warning.
+- The full TensorFlow U-Net and EasyOCR pipeline remains available in the local backend.
+- The U-Net checkpoint remains stored in the Space but is not loaded in free Space mode.
   - Peak per-request processing footprint: < 1.2 GB per $2048 \times 2048$ image.
   - Concurrency: Bounded by semaphore to 2 concurrent image pipelines to guarantee stability within 16 GB RAM.
 

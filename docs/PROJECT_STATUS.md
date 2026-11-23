@@ -148,3 +148,19 @@
 - [BLOCKED] The latest Space revision (`87c9a2a`) exits with code 3 during startup while EasyOCR model download is logged. `/health` returns Gradio HTML rather than the FastAPI JSON response, so the hosted API is not operational.
 - [VERIFIED] The FastAPI pipeline tests pass locally (11/11) after initializing EasyOCR before TensorFlow.
 - [NEXT TODO] Resolve the EasyOCR/ZeroGPU startup failure before claiming the backend is deployed. The current model and OCR pipeline have not been verified on the hosted Space.
+
+## 2026-11-24 — Lightweight free Space mode
+
+- [COMPLETED] Added an HF-only lightweight mode that skips TensorFlow and EasyOCR initialization while keeping the FastAPI routes.
+- [COMPLETED] Free Space mode uses OpenCV segmentation and clearly warns that OCR text is a placeholder; normal local mode still uses U-Net and EasyOCR.
+- [VERIFIED] Ran `.\backend\.venv\Scripts\pytest.exe -q tests\test_pipeline.py`; all 12 tests passed.
+- [VERIFIED] Sent a synthetic page through the lightweight FastAPI pipeline locally; it returned HTTP 200 with `opencv_fallback` and the placeholder-OCR warning.
+- [NEXT TODO] Push this lightweight mode to the Space and verify hosted `/health` and `/api/v1/translate-page`.
+
+## 2026-11-24 — Hosted lightweight Space verification
+
+- [VERIFIED] The Space is running; hosted `/health` returns JSON with `detector_mode: opencv_fallback` and `model_loaded: false`, as expected in free lightweight mode.
+- [VERIFIED] Hosted `/gradio/` returns the Gradio app, and a synthetic comic page submitted to `/api/v1/translate-page` completed with HTTP 200 and detected four bubbles.
+- [VERIFIED] The hosted request exercised OpenCV segmentation and typeset rendering; OCR correctly reported that placeholder text was used.
+- [KNOWN LIMITATION] Batch translation made one provider call for the page, but Google Translate still returned HTTP 429 due to its rate limit. The request completed with a warning and untranslated source text; successful hosted translation remains unverified.
+- [NEXT TODO] Configure a reliable translation provider before claiming hosted translation is production-ready.

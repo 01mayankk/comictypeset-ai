@@ -52,10 +52,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Initializes models and pipeline stages once on worker startup."""
     logger.info("Initializing ComicTypeset AI pipeline services...")
 
-    app.state.ocr_translator = OCRTranslator(languages=["en"])
+    lightweight_mode = os.getenv("COMICTYPESET_LIGHTWEIGHT", "").lower() in {"1", "true", "yes"}
+    app.state.ocr_translator = OCRTranslator(languages=["en"], use_easyocr=not lightweight_mode)
     configured_model_path = Path(os.getenv("MODEL_PATH", "models/bubble_unet.keras")).expanduser()
     model_path = configured_model_path if configured_model_path.is_absolute() else BACKEND_DIR / configured_model_path
-    app.state.segmenter = SpeechBubbleSegmenter(model_path=str(model_path.resolve()))
+    app.state.segmenter = SpeechBubbleSegmenter(
+        model_path=str(model_path.resolve()),
+        use_unet=not lightweight_mode
+    )
     app.state.typesetter = ComicTypesetter()
 
     logger.info(f"Pipeline ready. Active bubble detector mode: {app.state.segmenter.active_mode}")
@@ -163,6 +167,8 @@ async def translate_page(
     # Stage 2: OCR Extraction
     t_ocr_start = time.perf_counter()
     bubble_items: list[BubbleItem] = []
+    if ocr_translator.reader is None:
+        warnings.append("EasyOCR is unavailable; placeholder OCR text is used.")
     for b in raw_bubbles:
         text, conf = ocr_translator.extract_text(image_rgb, b["bbox"])
         b["raw_text"] = text

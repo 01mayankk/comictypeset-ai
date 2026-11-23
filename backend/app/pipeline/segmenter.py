@@ -55,13 +55,20 @@ def sort_bubbles_reading_order(
 class SpeechBubbleSegmenter:
     """Orchestrates speech bubble segmentation with graceful classical fallback."""
 
-    def __init__(self, model_path: str | os.PathLike[str] | None = None) -> None:
+    def __init__(
+        self,
+        model_path: str | os.PathLike[str] | None = None,
+        use_unet: bool = True
+    ) -> None:
         if model_path is None:
             model_path = Path(__file__).resolve().parents[2] / "models" / "bubble_unet.keras"
         self.model_path = os.fspath(model_path)
         self.model = None
         self.active_mode = "opencv_fallback"
-        self._init_detector()
+        if use_unet:
+            self._init_detector()
+        else:
+            logger.info("U-Net is disabled; using OpenCV fallback.")
 
     def _init_detector(self) -> None:
         """Attempts to load pre-trained U-Net weights or activates OpenCV fallback."""

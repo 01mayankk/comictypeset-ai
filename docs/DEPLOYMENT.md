@@ -10,15 +10,15 @@ This guide documents deploying ComicTypeset AI to a free Hugging Face ZeroGPU Sp
 flowchart LR
     User["End User Browser"] -->|HTTPS| Vercel["Frontend Studio (Vercel)<br/>Next.js 14 App Router"]
     Vercel -->|REST API Requests| HF["Backend Service (Hugging Face ZeroGPU Space)<br/>Gradio + mounted FastAPI on Port 7860"]
-    HF -->|Fetch Model Checkpoint| HFHub["Hugging Face Hub / Local Checkpoint<br/>bubble_unet.keras"]
-    HF -->|Download OCR Weights| EasyOCRRepo["EasyOCR Cache<br/>/home/user/.EasyOCR"]
+    HF -->|Free Space mode| Lite["OpenCV segmentation<br/>Placeholder OCR"]
+    Local["Local backend"] -->|Full pipeline| Full["TensorFlow U-Net<br/>EasyOCR"]
 ```
 
 ---
 
 ## 2. Backend Deployment: Hugging Face Gradio ZeroGPU Space
 
-The existing Space uses the Gradio SDK, which is required for ZeroGPU. Its Gradio landing page is mounted at `/gradio/`, while the FastAPI endpoints remain available at `/`, `/health`, `/docs`, and `/api/v1/translate-page`. The current TensorFlow U-Net and EasyOCR inference path runs on CPU; ZeroGPU acceleration is not implemented for this model.
+The existing Space uses the Gradio SDK, which is required for ZeroGPU. Its Gradio landing page is mounted at `/gradio/`, while the FastAPI endpoints remain available at `/`, `/health`, `/docs`, and `/api/v1/translate-page`. Free Space mode skips TensorFlow and EasyOCR initialization: it uses OpenCV segmentation and placeholder OCR. The full U-Net and OCR pipeline remains available locally.
 
 ### 2.1 Space Configuration
 The root of the Hugging Face Space repository requires a `README.md` starting with YAML metadata:
@@ -49,7 +49,7 @@ app_file: gradio_app.py
    git commit -m "deploy: update Gradio ZeroGPU backend"
    git push origin main
    ```
-5. Monitor the Space build/runtime logs and verify `/health` reports `model_loaded: true` and `detector_mode: unet`.
+5. Monitor the Space build/runtime logs and verify `/health` reports `model_loaded: false` and `detector_mode: opencv_fallback` in free Space mode.
 
 ---
 

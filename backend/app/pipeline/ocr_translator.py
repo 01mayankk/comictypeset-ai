@@ -38,7 +38,8 @@ class OCRTranslator:
         self,
         languages: list[str] | None = None,
         translation_provider: Optional[Callable[[str, str, str], str]] = None,
-        translation_batch_provider: Optional[Callable[[list[str], str, str], list[str]]] = None
+        translation_batch_provider: Optional[Callable[[list[str], str, str], list[str]]] = None,
+        use_easyocr: bool = True
     ) -> None:
         self.languages = languages or ["en"]
         self.reader = None
@@ -47,7 +48,10 @@ class OCRTranslator:
         self._translation_batch_provider = translation_batch_provider
         if translation_provider is None and translation_batch_provider is None:
             self._translation_batch_provider = self._default_deep_translator_batch
-        self._init_reader()
+        if use_easyocr:
+            self._init_reader()
+        else:
+            logger.info("EasyOCR is disabled; using placeholder OCR text.")
 
     def _init_reader(self) -> None:
         """Initializes EasyOCR reader if available."""

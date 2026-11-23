@@ -576,10 +576,10 @@ app_file: gradio_app.py
 ```
 
 The Gradio entrypoint is `backend/gradio_app.py`; it mounts the existing
-FastAPI endpoints without removing them. The current TensorFlow model
-inference runs on CPU; ZeroGPU acceleration is not configured for this
-model. Plan for cold starts, model initialization time, and storage
-constraints. Verify `/health` before sending frontend traffic.
+FastAPI endpoints without removing them. To start reliably on free
+ZeroGPU, the Space uses OpenCV segmentation and placeholder OCR; the full
+TensorFlow U-Net and EasyOCR path remains available locally. Verify that
+`/health` reports `opencv_fallback` before sending frontend traffic.
 
 ### Frontend: Vercel
 
